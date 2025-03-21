@@ -2,7 +2,12 @@ package com.example.colorcompare;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +28,17 @@ import java.util.Base64;
 
 public class MainActivity extends AppCompatActivity {
 
+    Button add_button;
+    Button upload_button;
+    Button color1_button;
+    Button color2_button;
+    Button color3_button;
+    EditText input;
+    TextView color1_text;
+    TextView color2_text;
+    TextView color3_text;
+    ImageView logo;
+
     private ActivityMainBinding binding;
 
     @Override
@@ -31,6 +47,17 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        add_button = findViewById(R.id.button4);
+        upload_button = findViewById(R.id.button6);
+        color1_button = findViewById(R.id.button2);
+        color2_button = findViewById(R.id.button3);
+        color3_button = findViewById(R.id.button);
+        input = findViewById(R.id.editTextText);
+        color1_text = findViewById(R.id.textView4);
+        color2_text = findViewById(R.id.textView5);
+        color3_text = findViewById(R.id.textView6);
+        logo = findViewById(R.id.imageView2);
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
@@ -41,6 +68,12 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+        String imageUrl = "https://wallup.net/wp-content/uploads/2016/01/315311-landscape.jpg"; // Replace with your image URL
+
+        Glide.with(this)
+                .load(imageUrl)
+                .into(logo);
 
         new Thread(new Runnable() {
             @Override
