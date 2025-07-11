@@ -61,10 +61,12 @@ public class MainActivity extends AppCompatActivity {
     
     // UI Elements
     private Button addButton, uploadButton, color1Button, color2Button, color3Button, downloadButton;
+    private Button grid2x2, grid3x3, grid4x4, grid5x5;
     private EditText inputUrl;
     private TextView color1Text, color2Text, color3Text;
     private ImageView logoImageView;
     private RecyclerView imagesRecyclerView;
+    private int currentGridColumns = 3;
     
     // Data
     private ImageAdapter imageAdapter;
@@ -100,6 +102,11 @@ public class MainActivity extends AppCompatActivity {
         color3Button = findViewById(R.id.button);
         downloadButton = findViewById(R.id.download_button);
         
+        grid2x2 = findViewById(R.id.grid_2x2);
+        grid3x3 = findViewById(R.id.grid_3x3);
+        grid4x4 = findViewById(R.id.grid_4x4);
+        grid5x5 = findViewById(R.id.grid_5x5);
+        
         inputUrl = findViewById(R.id.editTextText);
         color1Text = findViewById(R.id.textView4);
         color2Text = findViewById(R.id.textView5);
@@ -126,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         imageAdapter = new ImageAdapter(this);
-        imagesRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        imagesRecyclerView.setLayoutManager(new GridLayoutManager(this, currentGridColumns));
         imagesRecyclerView.setAdapter(imageAdapter);
     }
 
@@ -179,6 +186,46 @@ public class MainActivity extends AppCompatActivity {
         color3Button.setOnClickListener(v -> selectColor(2));
 
         downloadButton.setOnClickListener(v -> downloadColorGrid());
+        
+        // Grid dimension buttons
+        grid2x2.setOnClickListener(v -> changeGridLayout(2));
+        grid3x3.setOnClickListener(v -> changeGridLayout(3));
+        grid4x4.setOnClickListener(v -> changeGridLayout(4));
+        grid5x5.setOnClickListener(v -> changeGridLayout(5));
+    }
+    
+    private void changeGridLayout(int columns) {
+        currentGridColumns = columns;
+        imagesRecyclerView.setLayoutManager(new GridLayoutManager(this, columns));
+        
+        // Update button states
+        updateGridButtonStates(columns);
+    }
+    
+    private void updateGridButtonStates(int activeColumns) {
+        // Reset all buttons to inactive state
+        grid2x2.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
+        grid2x2.setTextColor(getColor(android.R.color.black));
+        grid3x3.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
+        grid3x3.setTextColor(getColor(android.R.color.black));
+        grid4x4.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
+        grid4x4.setTextColor(getColor(android.R.color.black));
+        grid5x5.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
+        grid5x5.setTextColor(getColor(android.R.color.black));
+        
+        // Set active button
+        Button activeButton = null;
+        switch (activeColumns) {
+            case 2: activeButton = grid2x2; break;
+            case 3: activeButton = grid3x3; break;
+            case 4: activeButton = grid4x4; break;
+            case 5: activeButton = grid5x5; break;
+        }
+        
+        if (activeButton != null) {
+            activeButton.setBackgroundTintList(getColorStateList(android.R.color.holo_green_dark));
+            activeButton.setTextColor(getColor(android.R.color.white));
+        }
     }
 
     private void requestPermissions() {
@@ -215,6 +262,9 @@ public class MainActivity extends AppCompatActivity {
             .load(imageUrl)
             .into(logoImageView);
         
+        // Show loading message
+        Toast.makeText(this, "Analyzing colors...", Toast.LENGTH_SHORT).show();
+        
         // Fetch colors from Imagga API
         new Thread(() -> fetchImageColors(imageUrl)).start();
     }
@@ -238,12 +288,10 @@ public class MainActivity extends AppCompatActivity {
                     currentImageBitmap = resource;
                     logoImageView.setImageBitmap(resource);
                     
-                    // For file uploads, we need to upload to a temporary service or convert to base64
-                    // For now, we'll use a placeholder URL and the bitmap
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Image cropped and loaded. Using demo colors for local images.", Toast.LENGTH_LONG).show();
-                        // Set demo colors for local images
-                        setDemoColors();
+                        Toast.makeText(MainActivity.this, "Image cropped and loaded. Analyzing dominant colors...", Toast.LENGTH_SHORT).show();
+                        // Analyze colors from the bitmap directly
+                        analyzeImageColors(resource);
                     });
                 }
 
@@ -252,32 +300,60 @@ public class MainActivity extends AppCompatActivity {
             });
     }
 
-    private void setDemoColors() {
-        try {
-            currentColors = new ArrayList<>();
-            
-            // Create demo color data
-            JSONObject color1 = new JSONObject();
-            color1.put("html_code", "#FF5722");
-            color1.put("percent", 45.2);
-            
-            JSONObject color2 = new JSONObject();
-            color2.put("html_code", "#2196F3");
-            color2.put("percent", 32.8);
-            
-            JSONObject color3 = new JSONObject();
-            color3.put("html_code", "#4CAF50");
-            color3.put("percent", 22.0);
-            
-            currentColors.add(color1);
-            currentColors.add(color2);
-            currentColors.add(color3);
-            
-            runOnUiThread(() -> updateColorButtons());
-            
-        } catch (JSONException e) {
-            Log.e("ColorDemo", "Error creating demo colors", e);
-        }
+    private void analyzeImageColors(Bitmap bitmap) {
+        new Thread(() -> {
+            try {
+                currentColors = new ArrayList<>();
+                
+                // Extract dominant colors from bitmap
+                java.util.Map<Integer, Integer> colorMap = new java.util.HashMap<>();
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                int totalPixels = width * height;
+                
+                // Sample pixels (every 10th pixel for performance)
+                for (int x = 0; x < width; x += 10) {
+                    for (int y = 0; y < height; y += 10) {
+                        int pixel = bitmap.getPixel(x, y);
+                        // Reduce color precision for grouping similar colors
+                        int reducedColor = reduceColorPrecision(pixel);
+                        colorMap.put(reducedColor, colorMap.getOrDefault(reducedColor, 0) + 1);
+                    }
+                }
+                
+                // Sort colors by frequency
+                java.util.List<java.util.Map.Entry<Integer, Integer>> sortedColors = new java.util.ArrayList<>(colorMap.entrySet());
+                sortedColors.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+                
+                // Create color objects for top 3 colors
+                int sampledPixels = (width / 10) * (height / 10);
+                for (int i = 0; i < Math.min(3, sortedColors.size()); i++) {
+                    java.util.Map.Entry<Integer, Integer> entry = sortedColors.get(i);
+                    int color = entry.getKey();
+                    int count = entry.getValue();
+                    double percent = (count * 100.0) / sampledPixels;
+                    
+                    JSONObject colorObj = new JSONObject();
+                    colorObj.put("html_code", String.format("#%06X", (0xFFFFFF & color)));
+                    colorObj.put("percent", percent);
+                    currentColors.add(colorObj);
+                }
+                
+                runOnUiThread(() -> updateColorButtons());
+                
+            } catch (Exception e) {
+                Log.e("ColorAnalysis", "Error analyzing image colors", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error analyzing colors", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+    
+    private int reduceColorPrecision(int color) {
+        // Reduce precision by masking lower bits to group similar colors
+        int r = (Color.red(color) / 32) * 32;
+        int g = (Color.green(color) / 32) * 32;
+        int b = (Color.blue(color) / 32) * 32;
+        return Color.rgb(r, g, b);
     }
 
     private void fetchImageColors(String imageUrl) {
@@ -307,11 +383,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 connectionInput.close();
                 
+                Log.d("ImaggaApi", "API Response: " + jsonResponse.toString());
                 parseColorResponse(jsonResponse.toString());
                 
             } else {
                 Log.e("ImaggaApi", "Error: " + responseCode);
-                runOnUiThread(() -> Toast.makeText(this, "Failed to fetch colors from API", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(this, "Failed to fetch colors from API. Response code: " + responseCode, Toast.LENGTH_SHORT).show());
             }
 
         } catch (IOException e) {
@@ -456,7 +533,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Bitmap createGridBitmap(List<ColorData> imageList) {
         int imageSize = 200;
-        int columns = 3;
+        int columns = currentGridColumns;
         int rows = (int) Math.ceil(imageList.size() / (double) columns);
         
         int gridWidth = columns * imageSize;
