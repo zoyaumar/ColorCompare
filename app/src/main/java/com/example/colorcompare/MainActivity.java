@@ -1,46 +1,80 @@
 package com.example.colorcompare;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.colorcompare.databinding.ActivityMainBinding;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button add_button;
-    Button upload_button;
-    Button color1_button;
-    Button color2_button;
-    Button color3_button;
-    EditText input;
-    TextView color1_text;
-    TextView color2_text;
-    TextView color3_text;
-    ImageView logo;
-
+    private static final int REQUEST_PERMISSIONS = 100;
+    
+    // UI Elements
+    private Button addButton, uploadButton, color1Button, color2Button, color3Button, downloadButton;
+    private EditText inputUrl;
+    private TextView color1Text, color2Text, color3Text;
+    private ImageView logoImageView;
+    private RecyclerView imagesRecyclerView;
+    
+    // Data
+    private ImageAdapter imageAdapter;
     private ActivityMainBinding binding;
-
+    private List<JSONObject> currentColors;
+    private String currentImageUrl;
+    private Bitmap currentImageBitmap;
+    
+    // Activity launchers
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,51 +82,182 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        add_button = findViewById(R.id.button4);
-        upload_button = findViewById(R.id.button6);
-        color1_button = findViewById(R.id.button2);
-        color2_button = findViewById(R.id.button3);
-        color3_button = findViewById(R.id.button);
-        input = findViewById(R.id.editTextText);
-        color1_text = findViewById(R.id.textView4);
-        color2_text = findViewById(R.id.textView5);
-        color3_text = findViewById(R.id.textView6);
-        logo = findViewById(R.id.imageView2);
+        initializeViews();
+        setupNavigation();
+        setupRecyclerView();
+        setupActivityLaunchers();
+        requestPermissions();
+        setupClickListeners();
+    }
 
+    private void initializeViews() {
+        addButton = findViewById(R.id.button4);
+        uploadButton = findViewById(R.id.button6);
+        color1Button = findViewById(R.id.button2);
+        color2Button = findViewById(R.id.button3);
+        color3Button = findViewById(R.id.button);
+        downloadButton = findViewById(R.id.download_button);
+        
+        inputUrl = findViewById(R.id.editTextText);
+        color1Text = findViewById(R.id.textView4);
+        color2Text = findViewById(R.id.textView5);
+        color3Text = findViewById(R.id.textView6);
+        logoImageView = findViewById(R.id.imageView2);
+        imagesRecyclerView = findViewById(R.id.images_recycler_view);
+        
+        // Initialize with default state
+        resetColorButtons();
+        
+        // Set placeholder hint
+        inputUrl.setHint("Enter image URL here...");
+    }
+
+    private void setupNavigation() {
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-
-        String imageUrl = "https://wallup.net/wp-content/uploads/2016/01/315311-landscape.jpg"; // Replace with your image URL
-
-        Glide.with(this)
-                .load(imageUrl)
-                .into(logo);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //fetchImageTags();
-            }
-        }).start();
-
-        //
-        //  {"result": {"colors": {"background_colors": [{"b": 79, "closest_palette_color": "blueberry", "closest_palette_color_html_code": "#2d3359", "closest_palette_color_parent": "navy blue", "closest_palette_distance": 7.23020076751709, "g": 29, "html_code": "#1d1d4f", "percent": 43.374095916748, "r": 29}, {"b": 243, "closest_palette_color": "ice blue", "closest_palette_color_html_code": "#9bb7d4", "closest_palette_color_parent": "light blue", "closest_palette_distance": 6.8101224899292, "g": 184, "html_code": "#a4b8f3", "percent": 32.1508140563965, "r": 164}, {"b": 150, "closest_palette_color": "electric blue", "closest_palette_color_html_code": "#363b7c", "closest_palette_color_parent": "blue", "closest_palette_distance": 4.46446228027344, "g": 63, "html_code": "#3c3f96", "percent": 24.4750938415527, "r": 60}], "color_percent_threshold": 1.75, "color_variance": 49, "foreground_colors": [{"b": 210, "closest_palette_color": "royal blue", "closest_palette_color_html_code": "#00539c", "closest_palette_color_parent": "blue", "closest_palette_distance": 10.9151659011841, "g": 95, "html_code": "#465fd2", "percent": 50.4572639465332, "r": 70}, {"b": 241, "closest_palette_color": "periwinkle", "closest_palette_color_html_code": "#81a0d4", "closest_palette_color_parent": "light blue", "closest_palette_distance": 5.57353496551514, "g": 145, "html_code": "#7891f1", "percent": 47.5064010620117, "r": 120}, {"b": 40, "closest_palette_color": "fiesta", "closest_palette_color_html_code": "#be5141", "closest_palette_color_parent": "red", "closest_palette_distance": 8.91189098358154, "g": 40, "html_code": "#ee2828", "percent": 2.03633689880371, "r": 238}], "image_colors": [{"b": 113, "closest_palette_color": "electric blue", "closest_palette_color_html_code": "#363b7c", "closest_palette_color_parent": "blue", "closest_palette_distance": 4.57987833023071, "g": 44, "html_code": "#2a2c71", "percent": 55.8667793273926, "r": 42}, {"b": 240, "closest_palette_color": "periwinkle", "closest_palette_color_html_code": "#81a0d4", "closest_palette_color_parent": "light blue", "closest_palette_distance": 4.82036256790161, "g": 167, "html_code": "#94a7f0", "percent": 39.8112754821777, "r": 148}, {"b": 41, "closest_palette_color": "fiesta", "closest_palette_color_html_code": "#be5141", "closest_palette_color_parent": "red", "closest_palette_distance": 6.29721069335938, "g": 54, "html_code": "#b83629", "percent": 4.22439861297607, "r": 184}], "object_percentage": 15.9937887191772}}, "status": {"text": "", "type": "success"}}
-
     }
 
-    private void fetchImageTags() {
+    private void setupRecyclerView() {
+        imageAdapter = new ImageAdapter(this);
+        imagesRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        imagesRecyclerView.setAdapter(imageAdapter);
+    }
+
+    private void setupActivityLaunchers() {
+        imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri imageUri = result.getData().getData();
+                    if (imageUri != null) {
+                        loadImageFromUri(imageUri);
+                    }
+                }
+            }
+        );
+    }
+
+    private void setupClickListeners() {
+        addButton.setOnClickListener(v -> {
+            String url = inputUrl.getText().toString().trim();
+            if (!url.isEmpty()) {
+                loadImageFromUrl(url);
+            } else {
+                Toast.makeText(this, "Please enter an image URL", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        uploadButton.setOnClickListener(v -> openImagePicker());
+
+        color1Button.setOnClickListener(v -> selectColor(0));
+        color2Button.setOnClickListener(v -> selectColor(1));
+        color3Button.setOnClickListener(v -> selectColor(2));
+
+        downloadButton.setOnClickListener(v -> downloadColorGrid());
+    }
+
+    private void requestPermissions() {
+        String[] permissions = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_MEDIA_IMAGES
+        };
+
+        List<String> permissionsToRequest = new ArrayList<>();
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission);
+            }
+        }
+
+        if (!permissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(this, 
+                permissionsToRequest.toArray(new String[0]), REQUEST_PERMISSIONS);
+        }
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        imagePickerLauncher.launch(intent);
+    }
+
+    private void loadImageFromUrl(String imageUrl) {
+        currentImageUrl = imageUrl;
+        currentImageBitmap = null;
+        
+        // Load image preview
+        Glide.with(this)
+            .load(imageUrl)
+            .into(logoImageView);
+        
+        // Fetch colors from Imagga API
+        new Thread(() -> fetchImageColors(imageUrl)).start();
+    }
+
+    private void loadImageFromUri(Uri imageUri) {
+        currentImageUrl = imageUri.toString();
+        
+        Glide.with(this)
+            .asBitmap()
+            .load(imageUri)
+            .into(new CustomTarget<Bitmap>() {
+                @Override
+                public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
+                    currentImageBitmap = resource;
+                    logoImageView.setImageBitmap(resource);
+                    
+                    // For file uploads, we need to upload to a temporary service or convert to base64
+                    // For now, we'll use a placeholder URL and the bitmap
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Image loaded. Using demo colors for local images.", Toast.LENGTH_LONG).show();
+                        // Set demo colors for local images
+                        setDemoColors();
+                    });
+                }
+
+                @Override
+                public void onLoadCleared(Drawable placeholder) {}
+            });
+    }
+
+    private void setDemoColors() {
+        try {
+            currentColors = new ArrayList<>();
+            
+            // Create demo color data
+            JSONObject color1 = new JSONObject();
+            color1.put("html_code", "#FF5722");
+            color1.put("percent", 45.2);
+            
+            JSONObject color2 = new JSONObject();
+            color2.put("html_code", "#2196F3");
+            color2.put("percent", 32.8);
+            
+            JSONObject color3 = new JSONObject();
+            color3.put("html_code", "#4CAF50");
+            color3.put("percent", 22.0);
+            
+            currentColors.add(color1);
+            currentColors.add(color2);
+            currentColors.add(color3);
+            
+            runOnUiThread(() -> updateColorButtons());
+            
+        } catch (JSONException e) {
+            Log.e("ColorDemo", "Error creating demo colors", e);
+        }
+    }
+
+    private void fetchImageColors(String imageUrl) {
         String credentialsToEncode = "acc_4b98ddb60e3ded4" + ":" + "1e8a345cc9296bb0ad349432ee24d01a";
         String basicAuth = Base64.getEncoder().encodeToString(credentialsToEncode.getBytes(StandardCharsets.UTF_8));
 
         String endpointUrl = "https://api.imagga.com/v2/colors";
-        String imageUrl = "https://th.bing.com/th/id/R.b54866c50ec8db76df03fd1c78ee6691?rik=yJN8Yc2W%2f1yvEQ&pid=ImgRaw&r=0";
 
         HttpURLConnection connection = null;
         try {
@@ -114,13 +279,17 @@ public class MainActivity extends AppCompatActivity {
                     jsonResponse.append(line);
                 }
                 connectionInput.close();
-                Log.d("json", jsonResponse.toString());
+                
+                parseColorResponse(jsonResponse.toString());
+                
             } else {
                 Log.e("ImaggaApi", "Error: " + responseCode);
+                runOnUiThread(() -> Toast.makeText(this, "Failed to fetch colors from API", Toast.LENGTH_SHORT).show());
             }
 
         } catch (IOException e) {
             Log.e("ImaggaApi", "IOException: " + e.getMessage());
+            runOnUiThread(() -> Toast.makeText(this, "Network error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -128,5 +297,202 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void parseColorResponse(String jsonResponse) {
+        try {
+            JSONObject response = new JSONObject(jsonResponse);
+            JSONObject result = response.getJSONObject("result");
+            JSONObject colors = result.getJSONObject("colors");
+            JSONArray imageColors = colors.getJSONArray("image_colors");
 
+            currentColors = new ArrayList<>();
+            
+            // Get top 3 colors
+            for (int i = 0; i < Math.min(3, imageColors.length()); i++) {
+                currentColors.add(imageColors.getJSONObject(i));
+            }
+
+            runOnUiThread(() -> updateColorButtons());
+
+        } catch (JSONException e) {
+            Log.e("ColorParsing", "Error parsing JSON response", e);
+            runOnUiThread(() -> Toast.makeText(this, "Error parsing color data", Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void updateColorButtons() {
+        if (currentColors == null || currentColors.isEmpty()) {
+            resetColorButtons();
+            return;
+        }
+
+        try {
+            for (int i = 0; i < currentColors.size(); i++) {
+                JSONObject colorData = currentColors.get(i);
+                String hexColor = colorData.getString("html_code");
+                double percent = colorData.getDouble("percent");
+
+                Button button;
+                TextView textView;
+
+                switch (i) {
+                    case 0:
+                        button = color1Button;
+                        textView = color1Text;
+                        break;
+                    case 1:
+                        button = color2Button;
+                        textView = color2Text;
+                        break;
+                    case 2:
+                        button = color3Button;
+                        textView = color3Text;
+                        break;
+                    default:
+                        continue;
+                }
+
+                button.setText(hexColor);
+                button.setBackgroundColor(Color.parseColor(hexColor));
+                button.setVisibility(View.VISIBLE);
+                
+                textView.setText(String.format("%.1f%%", percent));
+                textView.setVisibility(View.VISIBLE);
+            }
+        } catch (JSONException e) {
+            Log.e("ColorUpdate", "Error updating color buttons", e);
+        }
+    }
+
+    private void resetColorButtons() {
+        color1Button.setText("#0000");
+        color1Button.setBackgroundColor(Color.GRAY);
+        color1Text.setText("0%");
+        
+        color2Button.setText("#0000");
+        color2Button.setBackgroundColor(Color.GRAY);
+        color2Text.setText("0%");
+        
+        color3Button.setText("#0000");
+        color3Button.setBackgroundColor(Color.GRAY);
+        color3Text.setText("0%");
+    }
+
+    private void selectColor(int colorIndex) {
+        if (currentColors == null || colorIndex >= currentColors.size()) {
+            Toast.makeText(this, "Please load an image first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            JSONObject selectedColorData = currentColors.get(colorIndex);
+            String hexColor = selectedColorData.getString("html_code");
+            double percent = selectedColorData.getDouble("percent");
+
+            ColorData colorData = new ColorData(currentImageUrl, currentImageBitmap, hexColor, hexColor, percent);
+            imageAdapter.addImage(colorData);
+
+            Toast.makeText(this, "Image added with color " + hexColor, Toast.LENGTH_SHORT).show();
+            
+            // Clear current image data
+            resetColorButtons();
+            currentColors = null;
+            currentImageUrl = null;
+            currentImageBitmap = null;
+            inputUrl.setText("");
+            
+        } catch (JSONException e) {
+            Log.e("ColorSelection", "Error selecting color", e);
+            Toast.makeText(this, "Error selecting color", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void downloadColorGrid() {
+        List<ColorData> imageList = imageAdapter.getImageList();
+        if (imageList.isEmpty()) {
+            Toast.makeText(this, "No images to download", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                Bitmap gridBitmap = createGridBitmap(imageList);
+                saveGridToFile(gridBitmap);
+                
+                runOnUiThread(() -> Toast.makeText(this, "Grid saved to Downloads", Toast.LENGTH_LONG).show());
+                
+            } catch (Exception e) {
+                Log.e("Download", "Error creating grid", e);
+                runOnUiThread(() -> Toast.makeText(this, "Error creating grid: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private Bitmap createGridBitmap(List<ColorData> imageList) {
+        int imageSize = 200;
+        int columns = 3;
+        int rows = (int) Math.ceil(imageList.size() / (double) columns);
+        
+        int gridWidth = columns * imageSize;
+        int gridHeight = rows * imageSize;
+        
+        Bitmap gridBitmap = Bitmap.createBitmap(gridWidth, gridHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(gridBitmap);
+        
+        for (int i = 0; i < imageList.size(); i++) {
+            ColorData colorData = imageList.get(i);
+            int row = i / columns;
+            int col = i % columns;
+            
+            int x = col * imageSize;
+            int y = row * imageSize;
+            
+            // Create colored background
+            try {
+                int color = Color.parseColor(colorData.getColorHex());
+                canvas.drawColor(color);
+            } catch (IllegalArgumentException e) {
+                canvas.drawColor(Color.GRAY);
+            }
+            
+            // Draw image if available
+            if (colorData.getImageBitmap() != null) {
+                Bitmap scaledImage = Bitmap.createScaledBitmap(colorData.getImageBitmap(), imageSize, imageSize, true);
+                canvas.drawBitmap(scaledImage, x, y, null);
+            }
+        }
+        
+        return gridBitmap;
+    }
+
+    private void saveGridToFile(Bitmap bitmap) throws IOException {
+        String fileName = "color_grid_" + System.currentTimeMillis() + ".png";
+        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File file = new File(downloadsDir, fileName);
+        
+        FileOutputStream fos = new FileOutputStream(file);
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        fos.close();
+        
+        // Add to media store
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        mediaScanIntent.setData(Uri.fromFile(file));
+        sendBroadcast(mediaScanIntent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSIONS) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (!allGranted) {
+                Toast.makeText(this, "Permissions required for full functionality", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 }
