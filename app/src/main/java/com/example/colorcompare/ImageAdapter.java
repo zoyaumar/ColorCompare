@@ -1,16 +1,12 @@
 package com.example.colorcompare;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -39,14 +35,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         ColorData colorData = imageList.get(position);
         
-        // Set the color as background
-        try {
-            int color = Color.parseColor(colorData.getColorHex());
-            holder.colorBackground.setCardBackgroundColor(color);
-        } catch (IllegalArgumentException e) {
-            holder.colorBackground.setCardBackgroundColor(Color.GRAY);
-        }
-        
         // Load image
         if (colorData.getImageBitmap() != null) {
             holder.imageView.setImageBitmap(colorData.getImageBitmap());
@@ -56,10 +44,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 .centerCrop()
                 .into(holder.imageView);
         }
-        
-        // Set color info
-        holder.colorHex.setText(colorData.getColorHex());
-        holder.colorPercent.setText(String.format("%.1f%%", colorData.getColorPercent()));
     }
 
     @Override
@@ -83,16 +67,10 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        TextView colorHex;
-        TextView colorPercent;
-        CardView colorBackground;
 
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.grid_image);
-            colorHex = itemView.findViewById(R.id.color_hex_text);
-            colorPercent = itemView.findViewById(R.id.color_percent_text);
-            colorBackground = itemView.findViewById(R.id.color_background);
         }
     }
 }
