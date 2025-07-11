@@ -38,7 +38,8 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.colorcompare.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.yalantis.ucrop.UCrop;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -148,15 +149,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         
-        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
-            final Uri resultUri = UCrop.getOutput(data);
-            if (resultUri != null) {
-                handleCroppedImage(resultUri);
+        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+                Uri resultUri = result.getUri();
+                if (resultUri != null) {
+                    handleCroppedImage(resultUri);
+                }
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                Exception error = result.getError();
+                Log.e("CropImage", "Crop error: ", error);
+                Toast.makeText(this, "Image cropping failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
-        } else if (resultCode == UCrop.RESULT_ERROR) {
-            final Throwable cropError = UCrop.getError(data);
-            Log.e("UCrop", "Crop error: ", cropError);
-            Toast.makeText(this, "Image cropping failed: " + cropError.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -220,14 +224,11 @@ public class MainActivity extends AppCompatActivity {
     private void loadImageFromUri(Uri imageUri) {
         currentImageUrl = imageUri.toString();
         
-        // Create a cropped file destination
-        String fileName = "cropped_image_" + System.currentTimeMillis() + ".jpg";
-        Uri destinationUri = Uri.fromFile(new File(getCacheDir(), fileName));
-        
-        // Start UCrop activity for image cropping
-        UCrop.of(imageUri, destinationUri)
-            .withAspectRatio(1, 1) // Square crop
-            .withMaxResultSize(800, 800)
+        // Start CropImage activity for image cropping
+        CropImage.activity(imageUri)
+            .setGuidelines(CropImageView.Guidelines.ON)
+            .setAspectRatio(1, 1) // Square crop
+            .setRequestedSize(800, 800)
             .start(this);
     }
     
