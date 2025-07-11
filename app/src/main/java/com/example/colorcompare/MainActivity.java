@@ -38,8 +38,8 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.colorcompare.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
+import com.canhub.cropper.CropImage;
+import com.canhub.cropper.CropImageView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -77,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     
     // Activity launchers
     private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private ActivityResultLauncher<CropImage.CropImageContractInput> cropImageLauncher;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,25 +144,24 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         );
-    }
-    
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
         
-        if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-            if (resultCode == RESULT_OK) {
-                Uri resultUri = result.getUri();
-                if (resultUri != null) {
-                    handleCroppedImage(resultUri);
+        cropImageLauncher = registerForActivityResult(
+            new CropImage.CropImageContract(),
+            result -> {
+                if (result.isSuccessful()) {
+                    Uri resultUri = result.getUri();
+                    if (resultUri != null) {
+                        handleCroppedImage(resultUri);
+                    }
+                } else {
+                    Exception error = result.getError();
+                    if (error != null) {
+                        Log.e("CropImage", "Crop error: ", error);
+                        Toast.makeText(this, "Image cropping failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                Exception error = result.getError();
-                Log.e("CropImage", "Crop error: ", error);
-                Toast.makeText(this, "Image cropping failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
-        }
+        );
     }
 
     private void setupClickListeners() {
@@ -224,12 +224,18 @@ public class MainActivity extends AppCompatActivity {
     private void loadImageFromUri(Uri imageUri) {
         currentImageUrl = imageUri.toString();
         
-        // Start CropImage activity for image cropping
-        CropImage.activity(imageUri)
-            .setGuidelines(CropImageView.Guidelines.ON)
-            .setAspectRatio(1, 1) // Square crop
-            .setRequestedSize(800, 800)
-            .start(this);
+        // Start CropImage activity for image cropping using launcher
+        cropImageLauncher.launch(
+            new CropImage.CropImageContractInput(
+                imageUri,
+                new CropImage.CropImageOptions()
+                    .setGuidelines(CropImageView.Guidelines.ON)
+                    .setAspectRatio(1, 1)
+                    .setRequestedSize(800, 800)
+                    .setOutputCompressFormat(Bitmap.CompressFormat.JPEG)
+                    .setOutputCompressQuality(90)
+            )
+        );
     }
     
     private void handleCroppedImage(Uri croppedImageUri) {

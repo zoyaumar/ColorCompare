@@ -30,7 +30,7 @@ I have successfully created a complete Android application that allows users to 
 
 ### 5. Download Functionality
 - **Grid Export**: Creates a downloadable bitmap grid of all color-ordered images
-- **Image Cropping**: All images are cropped to uniform square sizes (200x200 pixels)
+- **Image Cropping**: All images are cropped to uniform square sizes using CanHub cropper
 - **File System Integration**: Saves generated grids to the device's Downloads folder
 - **Media Scanner Integration**: Automatically adds saved files to the media library
 
@@ -54,6 +54,7 @@ I have successfully created a complete Android application that allows users to 
 - **CardView**: Card-based UI components
 - **JSON Library**: API response parsing
 - **Activity Result API**: Modern Android file selection
+- **CanHub Android Image Cropper**: Modern, maintained image cropping library
 
 ### Permissions & Security
 - **Internet Permission**: For API calls and image loading

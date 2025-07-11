@@ -40,7 +40,7 @@ dependencies {
     implementation("org.json:json:20231013")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.github.ArthurHub:Android-Image-Cropper:2.8.0")
+    implementation("com.github.CanHub:Android-Image-Cropper:4.5.0")
     implementation("androidx.activity:activity:1.9.0")
     implementation(libs.appcompat)
     implementation(libs.material)
