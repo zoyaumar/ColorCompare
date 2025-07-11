@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -37,6 +38,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.colorcompare.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.yalantis.ucrop.UCrop;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -141,6 +143,22 @@ public class MainActivity extends AppCompatActivity {
             }
         );
     }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            final Uri resultUri = UCrop.getOutput(data);
+            if (resultUri != null) {
+                handleCroppedImage(resultUri);
+            }
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            final Throwable cropError = UCrop.getError(data);
+            Log.e("UCrop", "Crop error: ", cropError);
+            Toast.makeText(this, "Image cropping failed: " + cropError.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void setupClickListeners() {
         addButton.setOnClickListener(v -> {
@@ -202,9 +220,21 @@ public class MainActivity extends AppCompatActivity {
     private void loadImageFromUri(Uri imageUri) {
         currentImageUrl = imageUri.toString();
         
+        // Create a cropped file destination
+        String fileName = "cropped_image_" + System.currentTimeMillis() + ".jpg";
+        Uri destinationUri = Uri.fromFile(new File(getCacheDir(), fileName));
+        
+        // Start UCrop activity for image cropping
+        UCrop.of(imageUri, destinationUri)
+            .withAspectRatio(1, 1) // Square crop
+            .withMaxResultSize(800, 800)
+            .start(this);
+    }
+    
+    private void handleCroppedImage(Uri croppedImageUri) {
         Glide.with(this)
             .asBitmap()
-            .load(imageUri)
+            .load(croppedImageUri)
             .into(new CustomTarget<Bitmap>() {
                 @Override
                 public void onResourceReady(@NonNull Bitmap resource, Transition<? super Bitmap> transition) {
@@ -214,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                     // For file uploads, we need to upload to a temporary service or convert to base64
                     // For now, we'll use a placeholder URL and the bitmap
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Image loaded. Using demo colors for local images.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Image cropped and loaded. Using demo colors for local images.", Toast.LENGTH_LONG).show();
                         // Set demo colors for local images
                         setDemoColors();
                     });
@@ -438,6 +468,9 @@ public class MainActivity extends AppCompatActivity {
         Bitmap gridBitmap = Bitmap.createBitmap(gridWidth, gridHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(gridBitmap);
         
+        // Fill background with white
+        canvas.drawColor(Color.WHITE);
+        
         for (int i = 0; i < imageList.size(); i++) {
             ColorData colorData = imageList.get(i);
             int row = i / columns;
@@ -446,18 +479,23 @@ public class MainActivity extends AppCompatActivity {
             int x = col * imageSize;
             int y = row * imageSize;
             
-            // Create colored background
+            // Draw colored border/background
+            Paint paint = new Paint();
             try {
                 int color = Color.parseColor(colorData.getColorHex());
-                canvas.drawColor(color);
+                paint.setColor(color);
+                canvas.drawRect(x, y, x + imageSize, y + imageSize, paint);
             } catch (IllegalArgumentException e) {
-                canvas.drawColor(Color.GRAY);
+                paint.setColor(Color.GRAY);
+                canvas.drawRect(x, y, x + imageSize, y + imageSize, paint);
             }
             
-            // Draw image if available
+            // Draw image if available (slightly smaller to show the color border)
             if (colorData.getImageBitmap() != null) {
-                Bitmap scaledImage = Bitmap.createScaledBitmap(colorData.getImageBitmap(), imageSize, imageSize, true);
-                canvas.drawBitmap(scaledImage, x, y, null);
+                int margin = 4;
+                int innerSize = imageSize - (margin * 2);
+                Bitmap scaledImage = Bitmap.createScaledBitmap(colorData.getImageBitmap(), innerSize, innerSize, true);
+                canvas.drawBitmap(scaledImage, x + margin, y + margin, null);
             }
         }
         
