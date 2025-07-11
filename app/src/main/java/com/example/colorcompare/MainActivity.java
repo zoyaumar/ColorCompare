@@ -38,8 +38,6 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.colorcompare.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.canhub.cropper.CropImage;
-import com.canhub.cropper.CropImageView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -148,23 +146,17 @@ public class MainActivity extends AppCompatActivity {
         cropImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    CropImage.ActivityResult cropResult = CropImage.getActivityResult(result.getData());
-                    if (cropResult != null) {
-                        Uri resultUri = cropResult.getUriContent();
-                        if (resultUri != null) {
-                            handleCroppedImage(resultUri);
+                if (result.getResultCode() == CropActivity.RESULT_CROP_SUCCESS) {
+                    if (result.getData() != null) {
+                        Uri croppedUri = result.getData().getParcelableExtra(CropActivity.EXTRA_CROPPED_URI);
+                        if (croppedUri != null) {
+                            handleCroppedImage(croppedUri);
                         }
                     }
-                } else if (result.getResultCode() == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-                    CropImage.ActivityResult cropResult = CropImage.getActivityResult(result.getData());
-                    if (cropResult != null) {
-                        Exception error = cropResult.getError();
-                        if (error != null) {
-                            Log.e("CropImage", "Crop error: ", error);
-                            Toast.makeText(this, "Image cropping failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                } else if (result.getResultCode() == CropActivity.RESULT_CROP_ERROR) {
+                    Toast.makeText(this, "Image cropping failed", Toast.LENGTH_SHORT).show();
+                } else if (result.getResultCode() == RESULT_CANCELED) {
+                    Toast.makeText(this, "Cropping cancelled", Toast.LENGTH_SHORT).show();
                 }
             }
         );
@@ -230,15 +222,9 @@ public class MainActivity extends AppCompatActivity {
     private void loadImageFromUri(Uri imageUri) {
         currentImageUrl = imageUri.toString();
         
-        // Start CropImage activity for image cropping using launcher
-        Intent cropIntent = CropImage.activity(imageUri)
-            .setGuidelines(CropImageView.Guidelines.ON)
-            .setAspectRatio(1, 1)
-            .setRequestedSize(800, 800)
-            .setOutputCompressFormat(Bitmap.CompressFormat.JPEG)
-            .setOutputCompressQuality(90)
-            .getIntent(this);
-        
+        // Start our custom CropActivity
+        Intent cropIntent = new Intent(this, CropActivity.class);
+        cropIntent.putExtra(CropActivity.EXTRA_IMAGE_URI, imageUri);
         cropImageLauncher.launch(cropIntent);
     }
     
