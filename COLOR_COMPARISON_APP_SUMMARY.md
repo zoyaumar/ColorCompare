@@ -46,7 +46,10 @@ I have successfully created a complete Android application that allows users to 
 1. **MainActivity.java** - Main activity handling all app functionality
 2. **ColorData.java** - Data model for storing image and color information
 3. **ImageAdapter.java** - RecyclerView adapter for the image grid
-4. **item_image_grid.xml** - Layout for individual grid items
+4. **CropActivity.java** - Custom image cropping activity using built-in Android APIs
+5. **CropOverlayView.java** - Custom view for touch-based crop area selection
+6. **item_image_grid.xml** - Layout for individual grid items
+7. **activity_crop.xml** - Layout for the custom crop activity
 
 ### Key Dependencies Added
 - **Glide**: Image loading and caching
@@ -54,7 +57,7 @@ I have successfully created a complete Android application that allows users to 
 - **CardView**: Card-based UI components
 - **JSON Library**: API response parsing
 - **Activity Result API**: Modern Android file selection
-- **CanHub Android Image Cropper**: Modern, maintained image cropping library
+- **Custom Image Cropper**: Built-in Android cropping using Canvas and touch events
 
 ### Permissions & Security
 - **Internet Permission**: For API calls and image loading
@@ -86,10 +89,13 @@ app/src/main/
 ├── java/com/example/colorcompare/
 │   ├── MainActivity.java
 │   ├── ColorData.java
-│   └── ImageAdapter.java
+│   ├── ImageAdapter.java
+│   ├── CropActivity.java
+│   └── CropOverlayView.java
 ├── res/
 │   ├── layout/
 │   │   ├── activity_main.xml
+│   │   ├── activity_crop.xml
 │   │   └── item_image_grid.xml
 │   └── xml/
 │       └── file_paths.xml
