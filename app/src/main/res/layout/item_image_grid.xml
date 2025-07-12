@@ -11,4 +11,22 @@
         android:scaleType="centerCrop"
         android:background="@drawable/image_border" />
 
+    <!-- Delete button overlay -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/delete_button"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:text="×"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        android:alpha="0.9"
+        app:backgroundTint="@color/error_color"
+        app:cornerRadius="16dp"
+        app:iconPadding="0dp"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton" />
+
 </FrameLayout>

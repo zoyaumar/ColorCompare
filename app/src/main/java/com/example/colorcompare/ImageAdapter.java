@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +45,34 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 .centerCrop()
                 .into(holder.imageView);
         }
+        
+        // Setup delete button
+        holder.deleteButton.setOnClickListener(v -> {
+            int adapterPosition = holder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION) {
+                removeImage(adapterPosition);
+            }
+        });
+        
+        // Show delete button on long press/hover simulation
+        holder.itemView.setOnLongClickListener(v -> {
+            if (holder.deleteButton.getVisibility() == View.GONE) {
+                holder.deleteButton.setVisibility(View.VISIBLE);
+                holder.deleteButton.animate().alpha(1.0f).setDuration(200);
+            } else {
+                holder.deleteButton.animate().alpha(0.0f).setDuration(200)
+                    .withEndAction(() -> holder.deleteButton.setVisibility(View.GONE));
+            }
+            return true;
+        });
+        
+        // Hide delete button when touching elsewhere
+        holder.imageView.setOnClickListener(v -> {
+            if (holder.deleteButton.getVisibility() == View.VISIBLE) {
+                holder.deleteButton.animate().alpha(0.0f).setDuration(200)
+                    .withEndAction(() -> holder.deleteButton.setVisibility(View.GONE));
+            }
+        });
     }
 
     @Override
@@ -60,6 +89,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     public void sortByColor() {
         Collections.sort(imageList, (a, b) -> Integer.compare(a.getColorValue(), b.getColorValue()));
     }
+    
+    public void removeImage(int position) {
+        if (position >= 0 && position < imageList.size()) {
+            imageList.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, imageList.size());
+        }
+    }
 
     public List<ColorData> getImageList() {
         return imageList;
@@ -67,10 +104,12 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
+        MaterialButton deleteButton;
 
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.grid_image);
+            deleteButton = itemView.findViewById(R.id.delete_button);
         }
     }
 }
