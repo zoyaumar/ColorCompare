@@ -185,36 +185,88 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void updateGridButtonStates(int activeColumns) {
-        // Reset all buttons to inactive state (outlined style)
+        // Reset all buttons to inactive state
+        try {
+            grid2x2.setBackgroundTintList(null);
+            grid2x2.setTextColor(getColor(R.color.secondary_text));
+            if (grid2x2 instanceof com.google.android.material.button.MaterialButton) {
+                ((com.google.android.material.button.MaterialButton) grid2x2).setStrokeColorResource(R.color.button_stroke);
+            }
+            
+            grid3x3.setBackgroundTintList(null);
+            grid3x3.setTextColor(getColor(R.color.secondary_text));
+            if (grid3x3 instanceof com.google.android.material.button.MaterialButton) {
+                ((com.google.android.material.button.MaterialButton) grid3x3).setStrokeColorResource(R.color.button_stroke);
+            }
+            
+            grid4x4.setBackgroundTintList(null);
+            grid4x4.setTextColor(getColor(R.color.secondary_text));
+            if (grid4x4 instanceof com.google.android.material.button.MaterialButton) {
+                ((com.google.android.material.button.MaterialButton) grid4x4).setStrokeColorResource(R.color.button_stroke);
+            }
+            
+            grid5x5.setBackgroundTintList(null);
+            grid5x5.setTextColor(getColor(R.color.secondary_text));
+            if (grid5x5 instanceof com.google.android.material.button.MaterialButton) {
+                ((com.google.android.material.button.MaterialButton) grid5x5).setStrokeColorResource(R.color.button_stroke);
+            }
+            
+            // Set active button
+            com.google.android.material.button.MaterialButton activeButton = null;
+            switch (activeColumns) {
+                case 2: activeButton = grid2x2; break;
+                case 3: activeButton = grid3x3; break;
+                case 4: activeButton = grid4x4; break;
+                case 5: activeButton = grid5x5; break;
+            }
+            
+            if (activeButton != null) {
+                activeButton.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                activeButton.setTextColor(getColor(R.color.white));
+                if (activeButton instanceof com.google.android.material.button.MaterialButton) {
+                    ((com.google.android.material.button.MaterialButton) activeButton).setStrokeColorResource(R.color.primary_color);
+                }
+            }
+        } catch (Exception e) {
+            // Fallback: just update colors without stroke
+            updateGridButtonStatesSimple(activeColumns);
+        }
+    }
+    
+    private void updateGridButtonStatesSimple(int activeColumns) {
+        // Simple fallback method without MaterialButton-specific features
+        int inactiveColor = getColor(R.color.secondary_text);
+        int activeColor = getColor(R.color.white);
+        int activeBgColor = getColor(R.color.primary_color);
+        
+        // Reset all to inactive
         grid2x2.setBackgroundTintList(null);
-        grid2x2.setTextColor(getColor(R.color.secondary_text));
-        grid2x2.setStrokeColorResource(R.color.button_stroke);
-        
+        grid2x2.setTextColor(inactiveColor);
         grid3x3.setBackgroundTintList(null);
-        grid3x3.setTextColor(getColor(R.color.secondary_text));
-        grid3x3.setStrokeColorResource(R.color.button_stroke);
-        
+        grid3x3.setTextColor(inactiveColor);
         grid4x4.setBackgroundTintList(null);
-        grid4x4.setTextColor(getColor(R.color.secondary_text));
-        grid4x4.setStrokeColorResource(R.color.button_stroke);
-        
+        grid4x4.setTextColor(inactiveColor);
         grid5x5.setBackgroundTintList(null);
-        grid5x5.setTextColor(getColor(R.color.secondary_text));
-        grid5x5.setStrokeColorResource(R.color.button_stroke);
+        grid5x5.setTextColor(inactiveColor);
         
         // Set active button
-        com.google.android.material.button.MaterialButton activeButton = null;
         switch (activeColumns) {
-            case 2: activeButton = grid2x2; break;
-            case 3: activeButton = grid3x3; break;
-            case 4: activeButton = grid4x4; break;
-            case 5: activeButton = grid5x5; break;
-        }
-        
-        if (activeButton != null) {
-            activeButton.setBackgroundTintList(getColorStateList(R.color.primary_color));
-            activeButton.setTextColor(getColor(R.color.white));
-            activeButton.setStrokeColorResource(R.color.primary_color);
+            case 2:
+                grid2x2.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                grid2x2.setTextColor(activeColor);
+                break;
+            case 3:
+                grid3x3.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                grid3x3.setTextColor(activeColor);
+                break;
+            case 4:
+                grid4x4.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                grid4x4.setTextColor(activeColor);
+                break;
+            case 5:
+                grid5x5.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                grid5x5.setTextColor(activeColor);
+                break;
         }
     }
 
