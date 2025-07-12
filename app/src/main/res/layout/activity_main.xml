@@ -19,25 +19,69 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:layout_marginBottom="32dp"
-            android:gravity="center">
+            android:gravity="center"
+            android:padding="16dp"
+            android:background="@drawable/header_gradient">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="8dp">
+
+                <!-- Color icon -->
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/color_dot"
+                    android:backgroundTint="@color/error_color"
+                    android:layout_marginEnd="4dp" />
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/color_dot"
+                    android:backgroundTint="@color/warning_color"
+                    android:layout_marginEnd="4dp" />
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/color_dot"
+                    android:backgroundTint="@color/success_color"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Color"
+                    android:textSize="34sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_color"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.02" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Compare"
+                    android:textSize="34sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent_color"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.02" />
+
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Color Palette"
-                android:textSize="32sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary_text"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.02" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Discover and organize image colors"
+                android:text="Discover • Analyze • Organize"
                 android:textSize="16sp"
                 android:textColor="@color/secondary_text"
-                android:fontFamily="sans-serif"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="0.1"
                 android:layout_marginTop="4dp" />
 
         </LinearLayout>
