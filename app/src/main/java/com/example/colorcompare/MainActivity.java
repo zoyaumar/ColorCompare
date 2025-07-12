@@ -26,18 +26,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.example.colorcompare.databinding.ActivityMainBinding;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PERMISSIONS = 100;
     
     // UI Elements
-    private Button addButton, uploadButton, color1Button, color2Button, color3Button, downloadButton;
-    private Button grid2x2, grid3x3, grid4x4, grid5x5;
+    private com.google.android.material.button.MaterialButton addButton, uploadButton, color1Button, color2Button, color3Button, downloadButton;
+    private com.google.android.material.button.MaterialButton grid2x2, grid3x3, grid4x4, grid5x5;
     private EditText inputUrl;
     private TextView color1Text, color2Text, color3Text;
     private ImageView logoImageView;
@@ -70,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
     
     // Data
     private ImageAdapter imageAdapter;
-    private ActivityMainBinding binding;
     private List<JSONObject> currentColors;
     private String currentImageUrl;
     private Bitmap currentImageBitmap;
@@ -82,12 +75,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
 
         initializeViews();
-        setupNavigation();
         setupRecyclerView();
         setupActivityLaunchers();
         requestPermissions();
@@ -121,15 +111,7 @@ public class MainActivity extends AppCompatActivity {
         inputUrl.setHint("Enter image URL here...");
     }
 
-    private void setupNavigation() {
-        BottomNavigationView navView = findViewById(R.id.nav_view);
-        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(binding.navView, navController);
-    }
+
 
     private void setupRecyclerView() {
         imageAdapter = new ImageAdapter(this);
@@ -203,18 +185,25 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void updateGridButtonStates(int activeColumns) {
-        // Reset all buttons to inactive state
-        grid2x2.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
-        grid2x2.setTextColor(getColor(android.R.color.black));
-        grid3x3.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
-        grid3x3.setTextColor(getColor(android.R.color.black));
-        grid4x4.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
-        grid4x4.setTextColor(getColor(android.R.color.black));
-        grid5x5.setBackgroundTintList(getColorStateList(android.R.color.darker_gray));
-        grid5x5.setTextColor(getColor(android.R.color.black));
+        // Reset all buttons to inactive state (outlined style)
+        grid2x2.setBackgroundTintList(null);
+        grid2x2.setTextColor(getColor(R.color.secondary_text));
+        grid2x2.setStrokeColorResource(R.color.button_stroke);
+        
+        grid3x3.setBackgroundTintList(null);
+        grid3x3.setTextColor(getColor(R.color.secondary_text));
+        grid3x3.setStrokeColorResource(R.color.button_stroke);
+        
+        grid4x4.setBackgroundTintList(null);
+        grid4x4.setTextColor(getColor(R.color.secondary_text));
+        grid4x4.setStrokeColorResource(R.color.button_stroke);
+        
+        grid5x5.setBackgroundTintList(null);
+        grid5x5.setTextColor(getColor(R.color.secondary_text));
+        grid5x5.setStrokeColorResource(R.color.button_stroke);
         
         // Set active button
-        Button activeButton = null;
+        com.google.android.material.button.MaterialButton activeButton = null;
         switch (activeColumns) {
             case 2: activeButton = grid2x2; break;
             case 3: activeButton = grid3x3; break;
@@ -223,8 +212,9 @@ public class MainActivity extends AppCompatActivity {
         }
         
         if (activeButton != null) {
-            activeButton.setBackgroundTintList(getColorStateList(android.R.color.holo_green_dark));
-            activeButton.setTextColor(getColor(android.R.color.white));
+            activeButton.setBackgroundTintList(getColorStateList(R.color.primary_color));
+            activeButton.setTextColor(getColor(R.color.white));
+            activeButton.setStrokeColorResource(R.color.primary_color);
         }
     }
 
