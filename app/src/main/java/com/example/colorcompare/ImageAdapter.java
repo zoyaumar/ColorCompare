@@ -64,29 +64,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
                 .show();
         });
         
-        // Show delete button on long press/hover simulation
-        holder.itemView.setOnLongClickListener(v -> {
-            if (!hasShownDeleteInstructions) {
-                Toast.makeText(context, "Long press an image, then tap the × button to delete. You will be asked to confirm.", Toast.LENGTH_LONG).show();
-                hasShownDeleteInstructions = true;
-            }
-            if (holder.deleteButton.getVisibility() == View.GONE) {
-                holder.deleteButton.setVisibility(View.VISIBLE);
-                holder.deleteButton.animate().alpha(1.0f).setDuration(200);
-            } else {
-                holder.deleteButton.animate().alpha(0.0f).setDuration(200)
-                    .withEndAction(() -> holder.deleteButton.setVisibility(View.GONE));
-            }
-            return true;
-        });
-        
         // Hide delete button when touching elsewhere
-        holder.imageView.setOnClickListener(v -> {
-            if (holder.deleteButton.getVisibility() == View.VISIBLE) {
-                holder.deleteButton.animate().alpha(0.0f).setDuration(200)
-                    .withEndAction(() -> holder.deleteButton.setVisibility(View.GONE));
-            }
-        });
+        // (No longer needed, delete button is always visible)
     }
 
     @Override
