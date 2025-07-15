@@ -76,6 +76,20 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     }
 
     @Override
+    public void onViewAttachedToWindow(@NonNull ImageViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        // Ensure square items
+        holder.itemView.post(() -> {
+            int width = holder.itemView.getWidth();
+            ViewGroup.LayoutParams params = holder.itemView.getLayoutParams();
+            if (params != null && width > 0 && params.height != width) {
+                params.height = width;
+                holder.itemView.setLayoutParams(params);
+            }
+        });
+    }
+
+    @Override
     public int getItemCount() {
         return imageList.size();
     }
