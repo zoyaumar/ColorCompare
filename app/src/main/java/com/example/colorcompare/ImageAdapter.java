@@ -15,10 +15,13 @@ import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import android.app.AlertDialog;
+import android.widget.Toast;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {
     private List<ColorData> imageList;
     private Context context;
+    private boolean hasShownDeleteInstructions = false;
 
     public ImageAdapter(Context context) {
         this.context = context;
@@ -48,14 +51,25 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         
         // Setup delete button
         holder.deleteButton.setOnClickListener(v -> {
-            int adapterPosition = holder.getAdapterPosition();
-            if (adapterPosition != RecyclerView.NO_POSITION) {
-                removeImage(adapterPosition);
-            }
+            new AlertDialog.Builder(context)
+                .setTitle("Delete Image")
+                .setMessage("Are you sure you want to delete this image?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    int adapterPosition = holder.getAdapterPosition();
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        removeImage(adapterPosition);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         });
         
         // Show delete button on long press/hover simulation
         holder.itemView.setOnLongClickListener(v -> {
+            if (!hasShownDeleteInstructions) {
+                Toast.makeText(context, "Long press an image, then tap the × button to delete. You will be asked to confirm.", Toast.LENGTH_LONG).show();
+                hasShownDeleteInstructions = true;
+            }
             if (holder.deleteButton.getVisibility() == View.GONE) {
                 holder.deleteButton.setVisibility(View.VISIBLE);
                 holder.deleteButton.animate().alpha(1.0f).setDuration(200);
