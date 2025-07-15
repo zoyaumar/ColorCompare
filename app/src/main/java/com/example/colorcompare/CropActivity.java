@@ -91,41 +91,55 @@ public class CropActivity extends AppCompatActivity {
             Toast.makeText(this, "Image not loaded", Toast.LENGTH_SHORT).show();
             return;
         }
-        
+
         try {
             // Get crop bounds from overlay
             android.graphics.RectF cropRect = cropOverlay.getCropRect();
-            
-            // Calculate the actual crop area on the bitmap
-            float scaleX = (float) originalBitmap.getWidth() / imageView.getWidth();
-            float scaleY = (float) originalBitmap.getHeight() / imageView.getHeight();
-            
-            int startX = Math.max(0, (int) (cropRect.left * scaleX));
-            int startY = Math.max(0, (int) (cropRect.top * scaleY));
-            int width = Math.min(originalBitmap.getWidth() - startX, (int) (cropRect.width() * scaleX));
-            int height = Math.min(originalBitmap.getHeight() - startY, (int) (cropRect.height() * scaleY));
-            
+
+            // Calculate the actual crop area on the bitmap, accounting for centerInside scaling
+            float viewWidth = imageView.getWidth();
+            float viewHeight = imageView.getHeight();
+            float imageWidth = originalBitmap.getWidth();
+            float imageHeight = originalBitmap.getHeight();
+
+            float scale = Math.min(viewWidth / imageWidth, viewHeight / imageHeight);
+            float displayedWidth = imageWidth * scale;
+            float displayedHeight = imageHeight * scale;
+            float dx = (viewWidth - displayedWidth) / 2f;
+            float dy = (viewHeight - displayedHeight) / 2f;
+
+            // Map cropRect from view coordinates to bitmap coordinates
+            float cropLeft = (cropRect.left - dx) / scale;
+            float cropTop = (cropRect.top - dy) / scale;
+            float cropRight = (cropRect.right - dx) / scale;
+            float cropBottom = (cropRect.bottom - dy) / scale;
+
+            int startX = Math.max(0, Math.round(cropLeft));
+            int startY = Math.max(0, Math.round(cropTop));
+            int width = Math.min(originalBitmap.getWidth() - startX, Math.round(cropRight - cropLeft));
+            int height = Math.min(originalBitmap.getHeight() - startY, Math.round(cropBottom - cropTop));
+
             // Ensure square crop
             int size = Math.min(width, height);
-            
+
             // Create cropped bitmap
             Bitmap croppedBitmap = Bitmap.createBitmap(originalBitmap, startX, startY, size, size);
-            
+
             // Scale to desired size (800x800)
             Bitmap scaledBitmap = Bitmap.createScaledBitmap(croppedBitmap, 800, 800, true);
-            
+
             // Save to cache
             File croppedFile = new File(getCacheDir(), "cropped_" + System.currentTimeMillis() + ".jpg");
             FileOutputStream fos = new FileOutputStream(croppedFile);
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             fos.close();
-            
+
             // Return result
             Intent resultIntent = new Intent();
             resultIntent.putExtra(EXTRA_CROPPED_URI, Uri.fromFile(croppedFile));
             setResult(RESULT_CROP_SUCCESS, resultIntent);
             finish();
-            
+
         } catch (Exception e) {
             Log.e("CropActivity", "Error cropping image", e);
             Toast.makeText(this, "Error cropping image: " + e.getMessage(), Toast.LENGTH_SHORT).show();
