@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     
     // UI Elements
     private com.google.android.material.button.MaterialButton addButton, uploadButton, color1Button, color2Button, color3Button, downloadButton;
-    private com.google.android.material.button.MaterialButton grid2x2, grid3x3, grid4x4, grid5x5;
+    private com.google.android.material.button.MaterialButton grid3x3, grid4x4, grid5x5, grid6x6;
     private EditText inputUrl;
     private TextView color1Text, color2Text, color3Text;
     private ImageView logoImageView;
@@ -92,10 +92,10 @@ public class MainActivity extends AppCompatActivity {
         color3Button = findViewById(R.id.button);
         downloadButton = findViewById(R.id.download_button);
         
-        grid2x2 = findViewById(R.id.grid_2x2);
         grid3x3 = findViewById(R.id.grid_3x3);
         grid4x4 = findViewById(R.id.grid_4x4);
         grid5x5 = findViewById(R.id.grid_5x5);
+        grid6x6 = findViewById(R.id.grid_6x6);
         
         inputUrl = findViewById(R.id.editTextText);
         color1Text = findViewById(R.id.textView4);
@@ -170,10 +170,10 @@ public class MainActivity extends AppCompatActivity {
         downloadButton.setOnClickListener(v -> downloadColorGrid());
         
         // Grid dimension buttons
-        grid2x2.setOnClickListener(v -> changeGridLayout(2));
         grid3x3.setOnClickListener(v -> changeGridLayout(3));
         grid4x4.setOnClickListener(v -> changeGridLayout(4));
         grid5x5.setOnClickListener(v -> changeGridLayout(5));
+        grid6x6.setOnClickListener(v -> changeGridLayout(6));
     }
     
     private void changeGridLayout(int columns) {
@@ -187,12 +187,6 @@ public class MainActivity extends AppCompatActivity {
     private void updateGridButtonStates(int activeColumns) {
         // Reset all buttons to inactive state
         try {
-            grid2x2.setBackgroundTintList(null);
-            grid2x2.setTextColor(getColor(R.color.secondary_text));
-            if (grid2x2 instanceof com.google.android.material.button.MaterialButton) {
-                ((com.google.android.material.button.MaterialButton) grid2x2).setStrokeColorResource(R.color.button_stroke);
-            }
-            
             grid3x3.setBackgroundTintList(null);
             grid3x3.setTextColor(getColor(R.color.secondary_text));
             if (grid3x3 instanceof com.google.android.material.button.MaterialButton) {
@@ -210,14 +204,20 @@ public class MainActivity extends AppCompatActivity {
             if (grid5x5 instanceof com.google.android.material.button.MaterialButton) {
                 ((com.google.android.material.button.MaterialButton) grid5x5).setStrokeColorResource(R.color.button_stroke);
             }
+
+            grid6x6.setBackgroundTintList(null);
+            grid6x6.setTextColor(getColor(R.color.secondary_text));
+            if (grid6x6 instanceof com.google.android.material.button.MaterialButton) {
+                ((com.google.android.material.button.MaterialButton) grid6x6).setStrokeColorResource(R.color.button_stroke);
+            }
             
             // Set active button
             com.google.android.material.button.MaterialButton activeButton = null;
             switch (activeColumns) {
-                case 2: activeButton = grid2x2; break;
                 case 3: activeButton = grid3x3; break;
                 case 4: activeButton = grid4x4; break;
                 case 5: activeButton = grid5x5; break;
+                case 6: activeButton = grid6x6; break;
             }
             
             if (activeButton != null) {
@@ -240,21 +240,17 @@ public class MainActivity extends AppCompatActivity {
         int activeBgColor = getColor(R.color.primary_color);
         
         // Reset all to inactive
-        grid2x2.setBackgroundTintList(null);
-        grid2x2.setTextColor(inactiveColor);
         grid3x3.setBackgroundTintList(null);
         grid3x3.setTextColor(inactiveColor);
         grid4x4.setBackgroundTintList(null);
         grid4x4.setTextColor(inactiveColor);
         grid5x5.setBackgroundTintList(null);
         grid5x5.setTextColor(inactiveColor);
+        grid6x6.setBackgroundTintList(null);
+        grid6x6.setTextColor(inactiveColor);
         
         // Set active button
         switch (activeColumns) {
-            case 2:
-                grid2x2.setBackgroundTintList(getColorStateList(R.color.primary_color));
-                grid2x2.setTextColor(activeColor);
-                break;
             case 3:
                 grid3x3.setBackgroundTintList(getColorStateList(R.color.primary_color));
                 grid3x3.setTextColor(activeColor);
@@ -266,6 +262,10 @@ public class MainActivity extends AppCompatActivity {
             case 5:
                 grid5x5.setBackgroundTintList(getColorStateList(R.color.primary_color));
                 grid5x5.setTextColor(activeColor);
+                break;
+            case 6:
+                grid6x6.setBackgroundTintList(getColorStateList(R.color.primary_color));
+                grid6x6.setTextColor(activeColor);
                 break;
         }
     }
