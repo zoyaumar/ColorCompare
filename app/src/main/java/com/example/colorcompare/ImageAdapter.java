@@ -115,7 +115,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     }
 
     public void sortByColor() {
-        Collections.sort(imageList, (a, b) -> Integer.compare(a.getColorValue(), b.getColorValue()));
+        Collections.sort(imageList, (a, b) -> Float.compare(a.getHue(), b.getHue()));
     }
     
     public void removeImage(int position) {

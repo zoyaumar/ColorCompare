@@ -1,6 +1,7 @@
 package com.example.colorcompare;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 
 public class ColorData implements Comparable<ColorData> {
     private String imageUrl;
@@ -54,6 +55,18 @@ public class ColorData implements Comparable<ColorData> {
             return Integer.parseInt(hex, 16);
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    // Get hue from colorHex
+    public float getHue() {
+        try {
+            int color = Color.parseColor(colorHex);
+            float[] hsv = new float[3];
+            Color.colorToHSV(color, hsv);
+            return hsv[0]; // Hue value (0-360)
+        } catch (Exception e) {
+            return 0f;
         }
     }
 }
